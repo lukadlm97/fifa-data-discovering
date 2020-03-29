@@ -110,3 +110,46 @@ knn.em
 sum_stat <- cbind(ct.em,knn.em)
 sum_stat
 
+
+nb <- naiveBayes(Scorer~.,
+                 data=train_data)
+nb
+nb.pred <- predict(nb,test_data,type='raw')
+nb.pred
+
+library(pROC)
+
+roc_params  <- roc(response=test_data$Scorer,
+                   predictor = nb.pred[,2])
+roc_params
+roc_params$auc
+
+plot.roc(roc_params,
+         print.thres = TRUE,
+         print.thres.best.method = 'youden')
+roc_coords <- coords(roc_params,
+                     ret = c("accuracy","spec","sens","thr"),
+                     x="local maximas")  
+roc_coords
+
+thresh <- roc_coords[16,4]
+thresh
+
+nb.pred2 <- ifelse(test=nb.pred[,2]>=thresh,
+                   yes='Yes',no='No')
+nb.pred2 <- as.factor(nb.pred2)
+summary(nb.pred2)
+
+
+nb.cm <- table(true=nb.pred2,predicted=test_data$Scorer)
+nb.cm
+
+nb.em <- eval_measure(nb.cm)
+nb.em
+
+nb_ds <- st_ds
+str(st_ds)
+nb_ds[,-13]
+apply(nb_ds[,-13],2,shapiro.test)
+sum_stat <- cbind(sum_stat,nb.em)
+sum_stat
