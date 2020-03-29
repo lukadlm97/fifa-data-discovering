@@ -80,4 +80,33 @@ eval_measure <- function(cm){
   c(accurency=a,precison=p,recall=r,F1=f1)
 }
 
-eval_measure(tree.cm)
+ct.em <- eval_measure(tree.cm)
+ct.em
+library(class)
+
+folds_k <- trainControl(method='cv',number = 10)
+kGrid <- expand.grid(.k=seq(from=1,to=30,by=1))
+set.seed(120)
+cv_k_best <- train(Scorer~.,
+                   data=train_data,
+                   method='knn',
+                   trControl=folds_k,tuneGrid=kGrid)
+
+k_koef <- cv_k_best$bestTune$k
+k_koef
+str(train_data[,13])
+knn.pred <- knn(train=train_data[,-13],
+                 test=test_data[,-13],
+                 cl=train_data[,13],
+                 k=k_koef)
+
+knn.cm <- table(true=knn.pred,predicted=test_data$Scorer)
+knn.cm
+tree.cm
+
+knn.em <- eval_measure(knn.cm)
+knn.em
+
+sum_stat <- cbind(ct.em,knn.em)
+sum_stat
+
